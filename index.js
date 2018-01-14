@@ -1,6 +1,6 @@
 const Twit = require('twit');
 const TelegramBot = require('node-telegram-bot-api');
-const isMatch = require('./parser');
+const isMatch = require('./services/parser');
 const friensIds = require('./freindIds').ids;
 
 // replace the value below with the Telegram token you receive from @BotFather
@@ -25,9 +25,13 @@ const createStream = (friends, id) => {
         try {
             console.log(tweet.text);
             const {text} = tweet;
+            if(tweet.in_reply_to_status_id || tweet.in_reply_to_user_id){
+                return;
+            }
             if(isMatch(text) && friensIds.includes(tweet.user.id_str)) {
                 Object.keys(subscribers)
                     .forEach(chatId => bot.sendMessage(chatId, text));
+                console.log(tweet);
             }
         } catch (e) {
             throw e;
@@ -63,11 +67,3 @@ bot.on('message', (msg) => {
 });
 
 console.log('started');
-
-//------------fake server for heroku-------------
-const http = require('http');
-http.createServer(function (req, res) {
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Hello World\n');
-}).listen(process.env.PORT || '3100', "127.0.0.1");
-console.log('Server running at http://127.0.0.1:8124/');
